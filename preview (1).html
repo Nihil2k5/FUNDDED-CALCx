@@ -1,0 +1,519 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FundedCalc - R:R Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: Inter, system-ui, sans-serif; }
+  input { outline: none; transition: .2s; }
+  input:focus { border-color: #2563eb !important; box-shadow: 0 0 0 3px #dbeafe; }
+  .metric { transition: .2s; }
+  .metric:hover { transform: translateY(-2px); }
+  .progress { transition: width .3s ease; }
+</style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+<header class="bg-white border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-5 py-5 flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-extrabold text-blue-700">FundedCalc<span class="text-slate-800">.</span></h1>
+      <p class="text-xs text-slate-400 mt-1">Professional Funded Account Risk Manager</p>
+    </div>
+    <span class="text-xs font-bold bg-blue-50 text-blue-700 px-4 py-2 rounded-full">R:R CALCULATOR</span>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-5 py-8">
+
+  <div class="mb-8">
+    <h2 class="text-3xl font-bold tracking-tight">Trading Dashboard</h2>
+    <p class="text-slate-500 mt-2">Manage risk, calculate rewards and estimate your challenge completion time.</p>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+
+    <!-- INPUT PANEL -->
+    <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm h-fit">
+
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-bold text-lg">Account Settings</h3>
+        <span class="text-xs text-blue-600 font-semibold">INPUTS</span>
+      </div>
+
+      <div class="space-y-4">
+
+        <div>
+          <label class="text-sm font-medium">Account Balance ($)</label>
+          <input id="balance" type="number" value="5000" min="0" step="any" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Risk Per Trade ($)</label>
+          <input id="risk" type="number" value="35" min="0" step="any" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Stop Loss ($)</label>
+          <input id="sl" type="number" value="35" min="0" step="any" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Take Profit ($)</label>
+          <input id="tp" type="number" value="100" min="0" step="any" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Daily Loss Limit ($)</label>
+          <input id="daily" type="number" value="150" min="0" step="any" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Maximum Drawdown ($)</label>
+          <input id="maxDD" type="number" value="500" min="0" step="any" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Profit Target (%)</label>
+          <input id="target" type="number" value="8" min="0" step="any" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Expected Win Rate (%)</label>
+          <input id="winRate" type="number" value="60" min="0" max="100" step="any" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Trades Per Day</label>
+          <input id="trades" type="number" value="2" min="1" step="1" class="field">
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Trading Days Per Week</label>
+          <input id="daysWeek" type="number" value="5" min="1" max="7" step="1" class="field">
+        </div>
+
+        <button onclick="calculate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-3 transition">
+          Calculate Results
+        </button>
+
+        <button onclick="resetValues()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl py-3 transition">
+          Reset Defaults
+        </button>
+      </div>
+    </section>
+
+    <!-- RESULTS PANEL -->
+    <section class="lg:col-span-2 space-y-6">
+
+      <!-- MAIN METRICS -->
+      <div class="grid sm:grid-cols-2 gap-4">
+
+        <div class="metric bg-blue-600 text-white rounded-2xl p-6 shadow-sm">
+          <p class="text-blue-100 text-sm">Risk : Reward Ratio</p>
+          <h2 id="rr" class="text-4xl font-bold mt-3">1 : 2.86</h2>
+          <p class="text-blue-100 text-xs mt-2">Reward relative to risk</p>
+        </div>
+
+        <div class="metric bg-white border border-slate-200 rounded-2xl p-6">
+          <p class="text-slate-500 text-sm">Risk Per Trade</p>
+          <h2 id="riskPercent" class="text-4xl font-bold text-blue-600 mt-3">0.70%</h2>
+          <p class="text-slate-400 text-xs mt-2">Of account balance</p>
+        </div>
+
+        <div class="metric bg-white border border-slate-200 rounded-2xl p-6">
+          <p class="text-slate-500 text-sm">Potential Profit</p>
+          <h2 id="profit" class="text-3xl font-bold text-green-600 mt-3">$100</h2>
+          <p class="text-slate-400 text-xs mt-2">Per winning trade</p>
+        </div>
+
+        <div class="metric bg-white border border-slate-200 rounded-2xl p-6">
+          <p class="text-slate-500 text-sm">Potential Loss</p>
+          <h2 id="loss" class="text-3xl font-bold text-red-500 mt-3">$35</h2>
+          <p class="text-slate-400 text-xs mt-2">Per losing trade</p>
+        </div>
+
+      </div>
+
+      <!-- PERFORMANCE -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6">
+        <h3 class="font-bold text-lg mb-6">Trading Performance</h3>
+
+        <div class="grid sm:grid-cols-2 gap-y-7 gap-x-5">
+
+          <div>
+            <p class="text-sm text-slate-500">Break-even Win Rate</p>
+            <h2 id="breakeven" class="text-2xl font-bold mt-2">25.93%</h2>
+          </div>
+
+          <div>
+            <p class="text-sm text-slate-500">Daily Profit (All Wins)</p>
+            <h2 id="dailyProfit" class="text-2xl font-bold text-green-600 mt-2">$200</h2>
+          </div>
+
+          <div>
+            <p class="text-sm text-slate-500">Daily Loss (All Losses)</p>
+            <h2 id="dailyLoss" class="text-2xl font-bold text-red-500 mt-2">-$70</h2>
+          </div>
+
+          <div>
+            <p class="text-sm text-slate-500">Profit Target Amount</p>
+            <h2 id="targetAmount" class="text-2xl font-bold text-blue-600 mt-2">$400</h2>
+          </div>
+
+          <div>
+            <p class="text-sm text-slate-500">Expected Daily Net Profit</p>
+            <h2 id="expectedDaily" class="text-2xl font-bold text-green-600 mt-2">$0</h2>
+          </div>
+
+          <div>
+            <p class="text-sm text-slate-500">Expected Profit Per Trade</p>
+            <h2 id="expectancy" class="text-2xl font-bold text-blue-600 mt-2">$0</h2>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- COMPLETION TIMELINE -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6">
+
+        <div class="flex flex-wrap justify-between items-center gap-2 mb-6">
+          <div>
+            <h3 class="font-bold text-lg">Challenge Completion Timeline</h3>
+            <p class="text-xs text-slate-400 mt-1">Estimated time to reach your profit target</p>
+          </div>
+          <span class="text-xs font-bold text-blue-700 bg-blue-50 rounded-full px-3 py-2">LIVE ESTIMATE</span>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-4">
+
+          <div class="bg-blue-50 rounded-xl p-5">
+            <p class="text-sm text-blue-600 font-medium">Best Case</p>
+            <h2 id="bestDays" class="text-3xl font-bold text-blue-700 mt-3">2</h2>
+            <p class="text-xs text-blue-500 mt-1">Trading days</p>
+          </div>
+
+          <div class="bg-green-50 rounded-xl p-5">
+            <p class="text-sm text-green-600 font-medium">Expected</p>
+            <h2 id="avgDays" class="text-3xl font-bold text-green-700 mt-3">4</h2>
+            <p class="text-xs text-green-500 mt-1">Trading days</p>
+          </div>
+
+          <div class="bg-slate-100 rounded-xl p-5">
+            <p class="text-sm text-slate-600 font-medium">Conservative</p>
+            <h2 id="slowDays" class="text-3xl font-bold text-slate-700 mt-3">7</h2>
+            <p class="text-xs text-slate-500 mt-1">Trading days</p>
+          </div>
+
+        </div>
+
+        <div class="mt-6 space-y-4 text-sm">
+
+          <div class="flex justify-between border-b border-slate-100 pb-3">
+            <span class="text-slate-500">Winning trades required (ideal)</span>
+            <strong id="winsNeeded">4</strong>
+          </div>
+
+          <div class="flex justify-between border-b border-slate-100 pb-3">
+            <span class="text-slate-500">Expected total trades</span>
+            <strong id="totalTrades">7</strong>
+          </div>
+
+          <div class="flex justify-between border-b border-slate-100 pb-3">
+            <span class="text-slate-500">Expected trading days</span>
+            <strong id="tradingDays">4 Days</strong>
+          </div>
+
+          <div class="flex justify-between">
+            <span class="text-slate-500">Expected calendar days</span>
+            <strong id="calendarDays">6 Days</strong>
+          </div>
+
+        </div>
+
+        <p class="text-xs text-slate-400 mt-5 leading-relaxed">
+          Best case assumes every trade wins. Expected and conservative scenarios use estimated win rates, fixed trade frequency and fixed dollar outcomes. These are planning estimates, not guaranteed completion dates.
+        </p>
+      </div>
+
+      <!-- RISK LIMITS -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6">
+
+        <h3 class="font-bold text-lg mb-6">Funded Account Risk Limits</h3>
+
+        <div class="space-y-6">
+
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-slate-500">Daily Loss Capacity</span>
+              <strong id="dailyCount">4 losses</strong>
+            </div>
+            <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+              <div id="dailyBar" class="progress h-full bg-blue-500 rounded-full" style="width:23%">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-slate-500">Maximum Drawdown Capacity</span>
+              <strong id="ddCount">14 losses</strong>
+            </div>
+            <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+              <div id="ddBar" class="progress h-full bg-blue-500 rounded-full" style="width:7%">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-slate-500">Daily Planned Risk Usage</span>
+              <strong id="usage">46.67%</strong>
+            </div>
+            <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+              <div id="usageBar" class="progress h-full bg-indigo-500 rounded-full" style="width:46%">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RISK ASSESSMENT -->
+      <div id="warning" class="bg-blue-50 border border-blue-100 rounded-2xl p-5">
+        <h3 id="warningTitle" class="font-bold text-blue-800">Risk Assessment</h3>
+        <p id="warningText" class="text-sm text-blue-700 mt-2">
+          Your parameters are being calculated.
+        </p>
+      </div>
+
+    </section>
+  </div>
+
+  <footer class="text-center text-xs text-slate-400 mt-10 pb-6">
+    FundedCalc · Risk Management Dashboard · All calculations performed locally
+  </footer>
+
+</main>
+
+<script>
+const fields = [
+  'balance','risk','sl','tp','daily','maxDD',
+  'target','winRate','trades','daysWeek'
+];
+
+const defaults = {
+  balance: 5000,
+  risk: 35,
+  sl: 35,
+  tp: 100,
+  daily: 150,
+  maxDD: 500,
+  target: 8,
+  winRate: 60,
+  trades: 2,
+  daysWeek: 5
+};
+
+const money = n => '$' + n.toLocaleString('en-US', {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2
+});
+
+const set = (id, value) => {
+  document.getElementById(id).textContent = value;
+};
+
+const val = id => Number(document.getElementById(id).value);
+
+const setBar = (id, percentage) => {
+  document.getElementById(id).style.width =
+    Math.min(100, Math.max(0, percentage)) + '%';
+};
+
+function showWarning(messages) {
+  const box = document.getElementById('warning');
+  const title = document.getElementById('warningTitle');
+  const text = document.getElementById('warningText');
+
+  if (messages.length) {
+    box.className = 'bg-red-50 border border-red-200 rounded-2xl p-5';
+    title.className = 'font-bold text-red-800';
+    title.textContent = 'Risk Warning';
+    text.className = 'text-sm text-red-700 mt-2';
+    text.textContent = messages.join(' ');
+  } else {
+    box.className = 'bg-blue-50 border border-blue-100 rounded-2xl p-5';
+    title.className = 'font-bold text-blue-800';
+    title.textContent = 'Risk Assessment';
+    text.className = 'text-sm text-blue-700 mt-2';
+    text.textContent =
+      'Your parameters have been calculated. Always account for commissions, slippage and your prop firm rules.';
+  }
+}
+
+function calculate() {
+  const balance = val('balance');
+  const risk = val('risk');
+  const sl = val('sl');
+  const tp = val('tp');
+  const daily = val('daily');
+  const maxDD = val('maxDD');
+  const target = val('target');
+  const winRate = val('winRate') / 100;
+  const trades = val('trades');
+  const daysWeek = val('daysWeek');
+
+  const valid = fields.every(id =>
+    document.getElementById(id).value.trim() !== '' &&
+    Number.isFinite(val(id)) && val(id) >= 0
+  );
+
+  if (!valid || balance <= 0 || risk <= 0 || sl <= 0 ||
+      tp <= 0 || daily <= 0 || maxDD <= 0 ||
+      trades < 1 || !Number.isInteger(trades) ||
+      daysWeek < 1 || daysWeek > 7 ||
+      !Number.isInteger(daysWeek) ||
+      target <= 0 || winRate <= 0 || winRate > 1) {
+    showWarning(['Enter valid values. Win rate must be above 0% and at most 100%, and trading days must be between 1 and 7.']);
+    return;
+  }
+
+  // R:R and performance
+  const rr = tp / sl;
+  const riskPct = risk / balance * 100;
+  const breakEven = sl / (sl + tp) * 100;
+  const targetAmount = balance * target / 100;
+
+  // Daily calculations use risk per trade as actual loss
+  const dailyProfit = tp * trades;
+  const dailyLoss = risk * trades;
+
+  // Expected value uses win/loss outcomes and probability
+  const expectancy = winRate * tp - (1 - winRate) * risk;
+  const expectedDaily = expectancy * trades;
+
+  // Completion timeline: net profit is calculated over both wins and losses
+  const targetTrades = Math.ceil(targetAmount / tp);
+  const bestDays = Math.ceil(targetAmount / (tp * trades));
+
+  // Expected daily gain based on win probability
+  let expectedDays = null;
+  let totalExpectedTrades = null;
+
+  if (expectancy > 0) {
+    totalExpectedTrades = Math.ceil(targetAmount / expectancy);
+    expectedDays = Math.ceil(totalExpectedTrades / trades);
+  }
+
+  // Conservative: 10 percentage points below estimated win rate
+  const conservativeRate = Math.max(0.001, winRate - 0.10);
+  const conservativeEV = conservativeRate * tp -
+    (1 - conservativeRate) * risk;
+
+  let slowDays = null;
+  if (conservativeEV > 0) {
+    slowDays = Math.ceil(
+      Math.ceil(targetAmount / conservativeEV) / trades
+    );
+  }
+
+  // Calendar days: approximates weekly trading schedule
+  const calendarDays = expectedDays === null
+    ? null
+    : Math.ceil(expectedDays * 7 / daysWeek);
+
+  // Drawdown capacities: full fixed-risk losses, ignoring fees
+  const dailyLosses = Math.floor(daily / risk);
+  const ddLosses = Math.floor(maxDD / risk);
+
+  // Results
+  set('rr', '1 : ' + rr.toFixed(2));
+  set('riskPercent', riskPct.toFixed(2) + '%');
+  set('profit', money(tp));
+  set('loss', money(risk));
+  set('breakeven', breakEven.toFixed(2) + '%');
+  set('dailyProfit', money(dailyProfit));
+  set('dailyLoss', '-' + money(dailyLoss));
+  set('targetAmount', money(targetAmount));
+  set('expectancy', money(expectancy));
+  set('expectedDaily', money(expectedDaily));
+
+  set('winsNeeded', targetTrades + ' wins (ideal)');
+
+  set('bestDays', bestDays);
+  set('avgDays', expectedDays === null ? 'N/A' : expectedDays);
+  set('slowDays', slowDays === null ? 'N/A' : slowDays);
+
+  set('totalTrades', totalExpectedTrades === null
+    ? 'No positive expectancy'
+    : totalExpectedTrades);
+
+  set('tradingDays', expectedDays === null
+    ? 'Not estimable'
+    : expectedDays + ' Days');
+
+  set('calendarDays', calendarDays === null
+    ? 'Not estimable'
+    : calendarDays + ' Days');
+
+  set('dailyCount', dailyLosses + ' full losses');
+  set('ddCount', ddLosses + ' full losses');
+
+  setBar('dailyBar', risk / daily * 100);
+  setBar('ddBar', risk / maxDD * 100);
+
+  const dailyUsage = dailyLoss / daily * 100;
+  set('usage', dailyUsage.toFixed(2) + '%');
+  setBar('usageBar', dailyUsage);
+
+  // Warnings
+  const warnings = [];
+
+  if (risk >= daily)
+    warnings.push('One full losing trade reaches or exceeds the daily loss limit.');
+
+  if (risk >= maxDD)
+    warnings.push('One full losing trade reaches or exceeds the maximum drawdown.');
+
+  if (dailyLoss > daily)
+    warnings.push('All planned trades losing would exceed the daily loss limit.');
+
+  if (riskPct > 1)
+    warnings.push('Your risk per trade is above 1% of account balance.');
+
+  if (winRate * 100 <= breakEven)
+    warnings.push('Your estimated win rate is at or below the break-even win rate. Expected profitability is zero or negative.');
+
+  if (expectancy <= 0)
+    warnings.push('Your expected value per trade is not positive. A reliable completion estimate cannot be calculated.');
+
+  showWarning(warnings);
+}
+
+function resetValues() {
+  fields.forEach(id => {
+    document.getElementById(id).value = defaults[id];
+  });
+  calculate();
+}
+
+fields.forEach(id => {
+  document.getElementById(id).addEventListener('input', calculate);
+});
+
+// Responsive input styling
+document.querySelectorAll('.field').forEach(input => {
+  input.className +=
+    ' w-full mt-2 p-3 rounded-xl border border-slate-200 bg-white text-slate-800';
+});
+
+calculate();
+</script>
+
+</body>
+</html>
